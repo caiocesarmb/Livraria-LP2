@@ -1,0 +1,28 @@
+# Arquivos Compilados
+*.class
+*.jar
+*.war
+
+# Arquivos de Sistema
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Arquivos Gerados em Runtime
+vendas.txt
+*.log
+
+# Build output
+build/
+dist/
+target/
+out/
+
+# Pastas vazias
+model/

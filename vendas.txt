@@ -1,0 +1,2 @@
+V1782693726402 | 2026-06-28T21:42:06.409371305 | Cliente: Cliente não identificado | Funcionário: Maria Santos | Total: 89,90 | Pagamento: Dinheiro | Status: FINALIZADA | Itens: Clean Code(1)
+V1782693780740 | 2026-06-28T21:43:00.740502294 | Cliente: Cliente não identificado | Funcionário: Maria Santos | Total: 239,70 | Pagamento: PIX | Status: FINALIZADA | Itens: Design Patterns(3)
