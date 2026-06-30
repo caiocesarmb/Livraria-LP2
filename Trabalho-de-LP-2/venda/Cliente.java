@@ -13,9 +13,19 @@ public class Cliente {
     private List<Venda> historicoCompras;
 
     public Cliente(String cpf, String nome, String email, LocalDate dataCadastro) {
-        this.cpf = cpf;
-        this.nome = nome;
-        this.email = email;
+        if (cpf == null || !cpf.trim().matches("\\d{11}")) {
+            throw new IllegalArgumentException("CPF inválido.");
+        }
+        if (nome == null || nome.trim().isEmpty()) {
+            throw new IllegalArgumentException("Nome não pode ser vazio.");
+        }
+        if (email == null || !email.contains("@") || !email.contains(".")) {
+            throw new IllegalArgumentException("Email inválido.");
+        }
+
+        this.cpf = cpf.trim();
+        this.nome = nome.trim();
+        this.email = email.trim();
         this.dataCadastro = dataCadastro;
         this.historicoCompras = new ArrayList<>();
     }

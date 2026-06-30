@@ -7,6 +7,7 @@ import java.util.Map;
 import item.estoque.ItemEstoque;
 import funcionario.Funcionario;
 import enums.StatusVenda;
+import exceptions.VendaInvalidaException;
 
 public class Venda {
 
@@ -52,13 +53,44 @@ public class Venda {
         this.pagamento = pagamento;
     }
 
-    public void finalizar() {
-        if (pagamento != null) {
-            this.status = StatusVenda.FINALIZADA;
-            if (cliente != null) {
-                cliente.adicionarVenda(this);
-            }
+    public void finalizar() throws VendaInvalidaException {
+        if (status == StatusVenda.FINALIZADA || status == StatusVenda.CANCELADA
+                || status == StatusVenda.DEVOLVIDA_PARCIAL || status == StatusVenda.DEVOLVIDA_TOTAL) {
+            throw new VendaInvalidaException("Essa venda já não pode ser finalizada.");
         }
+        if (pagamento == null || itensVenda.isEmpty()) {
+            throw new VendaInvalidaException("Não é possível finalizar uma venda sem pagamento ou itens.");
+        }
+
+        this.status = StatusVenda.FINALIZADA;
+        if (cliente != null) {
+            cliente.adicionarVenda(this);
+        }
+    }
+
+    public void cancelar() throws VendaInvalidaException {
+        if (status == StatusVenda.FINALIZADA || status == StatusVenda.CANCELADA
+                || status == StatusVenda.DEVOLVIDA_PARCIAL || status == StatusVenda.DEVOLVIDA_TOTAL) {
+            throw new VendaInvalidaException("Essa venda não pode ser cancelada no estado atual.");
+        }
+
+        this.status = StatusVenda.CANCELADA;
+    }
+
+    public void devolverParcial() throws VendaInvalidaException {
+        if (status != StatusVenda.FINALIZADA) {
+            throw new VendaInvalidaException("A devolução parcial só é permitida para vendas finalizadas.");
+        }
+
+        this.status = StatusVenda.DEVOLVIDA_PARCIAL;
+    }
+
+    public void devolverTotal() throws VendaInvalidaException {
+        if (status != StatusVenda.FINALIZADA) {
+            throw new VendaInvalidaException("A devolução total só é permitida para vendas finalizadas.");
+        }
+
+        this.status = StatusVenda.DEVOLVIDA_TOTAL;
     }
 
     public String getCodigoVenda() {

@@ -41,6 +41,9 @@ public abstract class ItemEstoque {
     }
 
     public void setQuantidadeAtual(int quantidadeAtual) {
+        if (quantidadeAtual < 0) {
+            throw new IllegalArgumentException("Quantidade não pode ser negativa.");
+        }
         this.quantidadeAtual = quantidadeAtual;
     }
 
@@ -57,6 +60,9 @@ public abstract class ItemEstoque {
     }
 
     public void setPrecoCusto(double precoCusto) {
+        if (precoCusto < 0) {
+            throw new IllegalArgumentException("Preço de custo não pode ser negativo.");
+        }
         this.precoCusto = precoCusto;
     }
 
@@ -65,6 +71,9 @@ public abstract class ItemEstoque {
     }
 
     public void setPrecoVenda(double precoVenda) {
+        if (precoVenda < 0) {
+            throw new IllegalArgumentException("Preço de venda não pode ser negativo.");
+        }
         this.precoVenda = precoVenda;
     }
 
