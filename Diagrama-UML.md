@@ -1,8 +1,4 @@
-```mermaid```
----
-config:
-  layout: elk
----
+```Mermaid```
 classDiagram
 direction TB
     class Main {
