@@ -10,8 +10,10 @@ import item.estoque.ItemEstoque;
 import item.estoque.Livro;
 import item.estoque.Papelaria;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import venda.Cliente;
 import venda.Pagamento;
@@ -19,6 +21,7 @@ import venda.PagamentoDinheiro;
 import venda.PagamentoPix;
 import venda.Venda;
 import venda.VendaRepository;
+import permissao.Permissao;
 
 public class MenuFuncionario {
 
@@ -48,6 +51,7 @@ public class MenuFuncionario {
             System.out.println("1-Venda");
             System.out.println("2-Estoque");
             System.out.println("3-Cadastro de Cliente");
+            System.out.println("4-Devolução");
             System.out.println("0-Sair");
             System.out.print("Escolha uma opção: ");
 
@@ -67,6 +71,9 @@ public class MenuFuncionario {
                     break;
                 case 3:
                     cadastrarCliente(scanner);
+                    break;
+                case 4:
+                    menuDevolucao(scanner, funcionarioLogado);
                     break;
                 case 0:
                     System.out.println("Voltando ao menu principal...");
@@ -177,6 +184,37 @@ public class MenuFuncionario {
         }
         System.out.printf("Total geral: R$ %.2f%n", totalGeral);
 
+        Venda venda = new Venda(VendaService.gerarCodigoVenda(), cliente, funcionario);
+        for (ItemCarrinho itemCarrinho : carrinho) {
+            venda.adicionarItem(itemCarrinho.item, itemCarrinho.quantidade);
+        }
+
+        if (funcionario.getPermissoes().contains(Permissao.APLICAR_DESCONTO_PADRAO)) {
+            System.out.print("Deseja aplicar desconto? (S/N): ");
+            String aplicarDesconto = scanner.nextLine().trim().toUpperCase();
+            if (aplicarDesconto.equals("S")) {
+                System.out.print("Valor do desconto (R$): ");
+                try {
+                    double desconto = Double.parseDouble(scanner.nextLine().trim());
+                    venda.aplicarDesconto(desconto);
+                } catch (NumberFormatException e) {
+                    System.out.println("Valor inválido. Desconto não aplicado.");
+                }
+                System.out.println("\n--- RESUMO DO CARRINHO COM DESCONTO ---");
+                for (ItemCarrinho itemCarrinho : carrinho) {
+                    double subtotal = itemCarrinho.item.getPrecoVenda() * itemCarrinho.quantidade;
+                    System.out.printf("%s | Qtd: %d | Subtotal: R$ %.2f%n",
+                        itemCarrinho.item.getTitulo(),
+                        itemCarrinho.quantidade,
+                        subtotal);
+                }
+                System.out.printf("Desconto aplicado: R$ %.2f%n", venda.getDescontoAplicado());
+                System.out.printf("Total final: R$ %.2f%n", venda.calcularTotal());
+            }
+        }
+
+        double totalAPagar = venda.calcularTotal();
+
         System.out.println("\n--- Formas de Pagamento ---");
         System.out.println("1-Dinheiro");
         System.out.println("2-PIX");
@@ -188,11 +226,11 @@ public class MenuFuncionario {
             switch (tipoPagamento) {
                 case 1:
                     pagamento = new PagamentoDinheiro();
-                    pagamento.processar(totalGeral);
+                    pagamento.processar(totalAPagar);
                     break;
                 case 2:
                     pagamento = new PagamentoPix();
-                    pagamento.processar(totalGeral);
+                    pagamento.processar(totalAPagar);
                     break;
                 default:
                     System.out.println("Tipo de pagamento inválido.");
@@ -214,14 +252,11 @@ public class MenuFuncionario {
             itemCarrinho.item.setQuantidadeAtual(itemCarrinho.item.getQuantidadeAtual() - itemCarrinho.quantidade);
         }
 
-        Venda venda = new Venda(VendaService.gerarCodigoVenda(), cliente, funcionario);
-        for (ItemCarrinho itemCarrinho : carrinho) {
-            venda.adicionarItem(itemCarrinho.item, itemCarrinho.quantidade);
-        }
         venda.setPagamento(pagamento);
         try {
             venda.finalizar();
             VendaRepository.salvarVenda(venda);
+            Main.adicionarVendaRealizada(venda);
             PersistenciaService.salvarDados();
         } catch (Exception e) {
             System.out.println("Erro ao finalizar venda: " + e.getMessage());
@@ -230,6 +265,80 @@ public class MenuFuncionario {
 
         VendaService.gerarNotaFiscal(cliente, carrinho, pagamento, funcionario);
         System.out.println("\nVenda realizada com sucesso!");
+    }
+
+    public static void menuDevolucao(Scanner scanner, Funcionario funcionario) {
+        System.out.println("\n--- MENU DE DEVOLUÇÃO ---");
+        System.out.println("--- VENDAS FINALIZADAS ---");
+
+        List<Venda> vendasFinalizadas = new ArrayList<>();
+        for (Venda venda : Main.getVendasRealizadas()) {
+            if (venda.getStatus() == enums.StatusVenda.FINALIZADA) {
+                vendasFinalizadas.add(venda);
+            }
+        }
+
+        if (vendasFinalizadas.isEmpty()) {
+            System.out.println("Nenhuma venda finalizada encontrada.");
+        } else {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+            for (Venda venda : vendasFinalizadas) {
+                String nomeCliente = venda.getCliente() != null ? venda.getCliente().getNome() : "Cliente não identificado";
+                String dataFormatada = venda.getDataVenda().format(formatter);
+                String totalFormatado = String.format("R$ %.2f", venda.calcularTotal());
+                System.out.printf("Código: %s | Cliente: %s | Data: %s | Total: %s | Status: %s%n",
+                    venda.getCodigoVenda(),
+                    nomeCliente,
+                    dataFormatada,
+                    totalFormatado,
+                    venda.getStatus());
+            }
+        }
+
+        System.out.print("Código da venda: ");
+        String codigoVenda = scanner.nextLine().trim();
+
+        Venda vendaEncontrada = null;
+        for (Venda v : Main.getVendasRealizadas()) {
+            if (v.getCodigoVenda().equals(codigoVenda)) {
+                vendaEncontrada = v;
+                break;
+            }
+        }
+
+        if (vendaEncontrada == null) {
+            System.out.println("Venda não encontrada.");
+            return;
+        }
+
+        if (vendaEncontrada.getStatus() != enums.StatusVenda.FINALIZADA) {
+            System.out.println("Apenas vendas finalizadas podem ser devolvidas.");
+            return;
+        }
+
+        System.out.print("Confirmar devolução? (S/N): ");
+        String confirmarDevolucao = scanner.nextLine().trim().toUpperCase();
+        if (!confirmarDevolucao.equals("S")) {
+            System.out.println("Devolução cancelada.");
+            return;
+        }
+
+        try {
+            vendaEncontrada.devolverTotal();
+
+            for (Map.Entry<ItemEstoque, Integer> entrada : vendaEncontrada.getItensVenda().entrySet()) {
+                ItemEstoque item = entrada.getKey();
+                int quantidade = entrada.getValue();
+                item.setQuantidadeAtual(item.getQuantidadeAtual() + quantidade);
+            }
+
+            PersistenciaService.salvarDados();
+            System.out.println("Devolução realizada com sucesso.");
+        } catch (NumberFormatException e) {
+            System.out.println("Opção inválida.");
+        } catch (exceptions.VendaInvalidaException e) {
+            System.out.println(e.getMessage());
+        }
     }
 
     public static void menuEstoque(Scanner scanner, Funcionario funcionario) {

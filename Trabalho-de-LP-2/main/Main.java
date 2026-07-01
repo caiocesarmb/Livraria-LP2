@@ -13,12 +13,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 import venda.Cliente;
+import venda.Venda;
 
 public class Main {
 
     static List<Funcionario> funcionarios = new ArrayList<>();
     static List<ItemEstoque> estoque = new ArrayList<>();
     static List<Cliente> clientes = new ArrayList<>();
+    private static List<Venda> vendasRealizadas = new ArrayList<>();
+
+    public static List<Venda> getVendasRealizadas() {
+        return vendasRealizadas;
+    }
+
+    public static void adicionarVendaRealizada(Venda venda) {
+        if (venda != null) {
+            vendasRealizadas.add(venda);
+        }
+    }
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
