@@ -1,4 +1,4 @@
-```Mermaid
+````Mermaid
 ---
 config:
   layout: elk
@@ -293,6 +293,6 @@ direction TB
     MenuFuncionario ..> VendaRepository
     MenuFuncionario ..> VendaService
     MenuFuncionario ..> PagamentoPix
-```
     MenuFuncionario ..> PagamentoDinheiro
     MenuFuncionario ..> PagamentoDin
+````
